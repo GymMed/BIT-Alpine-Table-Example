@@ -1,0 +1,164 @@
+<!-- Needed elements for component! -->
+<!-- <script src="../../js/person.js"></script> -->
+<script>
+    window.tableData = function () {
+        return {
+            data: [],
+            firstNameValue: "",
+            lastNameValue: "",
+            ageValue: "",
+            nationalityValue: "",
+            //remove
+            removeIndexValue: "1",
+            removeResultMessage: "",
+            removeShowResult: false,
+            isSuccessResult: false,
+            addPerson() {
+                // let test = new Person("Joe", "Dalis", "29", "Russian");
+                if (
+                    this.firstNameValue === "" ||
+                    this.lastNameValue === "" ||
+                    this.ageValue === "" ||
+                    this.nationalityValue === ""
+                )
+                    return;
+
+                this.data.push(
+                    new Person(
+                        this.firstNameValue,
+                        this.lastNameValue,
+                        this.ageValue,
+                        this.nationalityValue
+                    )
+                );
+            },
+            removePerson() {
+                let removeIndex = parseInt(this.removeIndexValue) - 1;
+                this.removeShowResult = true;
+
+                if (
+                    isNaN(removeIndex) ||
+                    removeIndex < 0 ||
+                    removeIndex > this.data.length
+                ) {
+                    this.isSuccessResult = false;
+                    this.removeResultMessage = "Provided Invalid Index!";
+                    return;
+                }
+                this.data.splice(removeIndex, 1);
+                this.isSuccessResult = true;
+                this.removeResultMessage =
+                    "Successfully removed person from table!";
+            },
+        };
+    };
+</script>
+<div x-data="tableData();" x-init="" class="flex flex-col gap-3">
+    <table class="w-full border-collapse rounded-lg overflow-hidden">
+        <thead class="rounded-lg shadow-lg">
+            <tr
+                class="text-white bg-gradient-to-br from-purple-500 to-purple-700 rounded-lg"
+            >
+                <template x-for="header in Person.columnsNames">
+                    <th x-text="header" class="py-3"></th>
+                </template>
+            </tr>
+        </thead>
+        <tbody class="">
+            <template x-for="(record, index) in data">
+                <tr
+                    class="bg-gradient-to-br rounded-xl hover:text-white hover:from-purple-500 hover:to-purple-700"
+                >
+                    <td x-text="(index + 1) + '.'" class="text-center"></td>
+                    <template x-for="column in record">
+                        <td x-text="column" class="text-center"></td>
+                    </template>
+                </tr>
+            </template>
+        </tbody>
+    </table>
+    <div class="flex flex-col gap-3">
+        <form action="" class="flex flex-col gap-3">
+            <div class="flex flex-col gap-3">
+                <label for="firstName">First Name:</label>
+                <input
+                    type="text"
+                    name="firstName"
+                    id="firstName"
+                    placeholder="First Name . . ."
+                    class="w-full h-full p-2 border-2 rounded-md focus:ring-blue-500 focus:ring focus:ring-offset-2 focus:ring-offset-white"
+                    x-model="firstNameValue"
+                />
+            </div>
+            <div class="flex flex-col gap-3">
+                <label for="lastName">Last Name:</label>
+                <input
+                    type="text"
+                    name="lastName"
+                    id="lastName"
+                    placeholder="Last Name . . ."
+                    class="w-full h-full p-2 border-2 rounded-md focus:ring-blue-500 focus:ring focus:ring-offset-2 focus:ring-offset-white"
+                    x-model="lastNameValue"
+                />
+            </div>
+            <div class="flex flex-col gap-3">
+                <label for="age">Age:</label>
+                <input
+                    type="text"
+                    name="age"
+                    id="age"
+                    placeholder="Age . . ."
+                    class="w-full h-full p-2 border-2 rounded-md focus:ring-blue-500 focus:ring focus:ring-offset-2 focus:ring-offset-white"
+                    x-model="ageValue"
+                />
+            </div>
+            <div class="flex flex-col gap-3">
+                <label for="nationality">Nationality</label>
+                <input
+                    type="text"
+                    name="nationality"
+                    id="nationality"
+                    placeholder="Nationality . . ."
+                    class="w-full h-full p-2 border-2 rounded-md focus:ring-blue-500 focus:ring focus:ring-offset-2 focus:ring-offset-white"
+                    x-model="nationalityValue"
+                />
+            </div>
+        </form>
+        <button
+            type="button"
+            class="text-white bg-gradient-to-br from-blue-500 to-blue-700 hover:from-blue-700 hover:to-blue-900 rounded"
+            @click="addPerson();"
+        >
+            <div class="hover:scale-110 px-4 py-1">Add</div>
+        </button>
+    </div>
+    <div class="flex flex-col gap-3">
+        <div
+            class="p-3 text-white font-bold bg-gradient-to-br rounded-lg shadow-lg"
+            :class="{'from-green-500 to-green-700': isSuccessResult, 
+                'from-red-500 to-red-700': !isSuccessResult}"
+            x-show="removeShowResult"
+            x-text="removeResultMessage"
+        ></div>
+        <form>
+            <div class="flex flex-col gap-3">
+                <label for="removeIndex">Remove Index:</label>
+                <input
+                    type="text"
+                    name="removeIndex"
+                    id="removeIndex"
+                    placeholder="Index . . ."
+                    class="w-full h-full p-2 border-2 rounded-md focus:ring-blue-500 focus:ring focus:ring-offset-2 focus:ring-offset-white"
+                    x-model="removeIndexValue"
+                />
+            </div>
+        </form>
+        <button
+            type="button"
+            class="text-white bg-gradient-to-br from-blue-500 to-blue-700 hover:from-blue-700 hover:to-blue-900 rounded"
+            @click="removePerson();"
+        >
+            <div class="hover:scale-110 px-4 py-1">Remove</div>
+        </button>
+    </div>
+</div>
