@@ -8,20 +8,29 @@
             lastNameValue: "",
             ageValue: "",
             nationalityValue: "",
+            addResultMessage: "",
+            addShowResult: false,
+            isAddSuccessResult: false,
             //remove
             removeIndexValue: "1",
             removeResultMessage: "",
             removeShowResult: false,
-            isSuccessResult: false,
+            isRemoveSuccessResult: false,
             addPerson() {
                 // let test = new Person("Joe", "Dalis", "29", "Russian");
+                this.addShowResult = true;
+
                 if (
                     this.firstNameValue === "" ||
                     this.lastNameValue === "" ||
                     this.ageValue === "" ||
                     this.nationalityValue === ""
-                )
+                ) {
+                    this.addResultMessage =
+                        "You need to fill all inputs to add value!";
+                    this.isAddSuccessResult = false;
                     return;
+                }
 
                 this.data.push(
                     new Person(
@@ -31,6 +40,9 @@
                         this.nationalityValue
                     )
                 );
+                this.addResultMessage =
+                    "Successfully added person to the table!";
+                this.isAddSuccessResult = true;
             },
             removePerson() {
                 let removeIndex = parseInt(this.removeIndexValue) - 1;
@@ -41,12 +53,12 @@
                     removeIndex < 0 ||
                     removeIndex > this.data.length
                 ) {
-                    this.isSuccessResult = false;
+                    this.isRemoveSuccessResult = false;
                     this.removeResultMessage = "Provided Invalid Index!";
                     return;
                 }
                 this.data.splice(removeIndex, 1);
-                this.isSuccessResult = true;
+                this.isRemoveSuccessResult = true;
                 this.removeResultMessage =
                     "Successfully removed person from table!";
             },
@@ -78,6 +90,13 @@
         </tbody>
     </table>
     <div class="flex flex-col gap-3">
+        <div
+            class="p-3 text-white font-bold bg-gradient-to-br rounded-lg shadow-lg"
+            :class="{'from-green-500 to-green-700': isAddSuccessResult, 
+                'from-red-500 to-red-700': !isAddSuccessResult}"
+            x-show="addShowResult"
+            x-text="addResultMessage"
+        ></div>
         <form action="" class="flex flex-col gap-3">
             <div class="flex flex-col gap-3">
                 <label for="firstName">First Name:</label>
@@ -135,8 +154,8 @@
     <div class="flex flex-col gap-3">
         <div
             class="p-3 text-white font-bold bg-gradient-to-br rounded-lg shadow-lg"
-            :class="{'from-green-500 to-green-700': isSuccessResult, 
-                'from-red-500 to-red-700': !isSuccessResult}"
+            :class="{'from-green-500 to-green-700': isRemoveSuccessResult, 
+                'from-red-500 to-red-700': !isRemoveSuccessResult}"
             x-show="removeShowResult"
             x-text="removeResultMessage"
         ></div>
