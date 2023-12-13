@@ -29,4 +29,20 @@ class Person {
     getNationality() {
         return this.nationality;
     }
+
+    setFirstName(newFirstName) {
+        this.firstName = newFirstName;
+    }
+
+    setLastName(newLastName) {
+        this.lastName = newLastName;
+    }
+
+    setAge(newAge) {
+        this.age = newAge;
+    }
+
+    setNationality(newNationality) {
+        this.nationality = newNationality;
+    }
 }

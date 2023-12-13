@@ -4,6 +4,7 @@
     window.tableData = function () {
         return {
             data: [],
+            updateIndexValue: "",
             firstNameValue: "",
             lastNameValue: "",
             ageValue: "",
@@ -32,17 +33,83 @@
                     return;
                 }
 
-                this.data.push(
-                    new Person(
-                        this.firstNameValue,
-                        this.lastNameValue,
-                        this.ageValue,
-                        this.nationalityValue
-                    )
+                //- 1 because we need to get current index
+                //not representation index
+                let updateIndex = parseInt(this.updateIndexValue) - 1;
+
+                if (!this.isInArraySize(this.data, updateIndex)) {
+                    this.data.push(
+                        new Person(
+                            this.firstNameValue,
+                            this.lastNameValue,
+                            this.ageValue,
+                            this.nationalityValue
+                        )
+                    );
+                    this.addResultMessage =
+                        "Successfully added person to the table!";
+                    this.isAddSuccessResult = true;
+                    this.resetAddInputs();
+                    return;
+                }
+
+                this.updatePerson(
+                    this.data[updateIndex],
+                    this.firstNameValue,
+                    this.lastNameValue,
+                    this.ageValue,
+                    this.nationalityValue
                 );
+                this.updateIndexValue = this.data.length + 1;
                 this.addResultMessage =
-                    "Successfully added person to the table!";
+                    "Successfully updated person within a table!";
                 this.isAddSuccessResult = true;
+                this.resetAddInputs();
+            },
+            isInArraySize(array, value) {
+                if (!Array.isArray(array)) {
+                    return false;
+                } else if (
+                    isNaN(value) ||
+                    value < 0 ||
+                    !Array.isArray(array) ||
+                    value > array.length - 1
+                ) {
+                    return false;
+                }
+                return true;
+            },
+            setPersonDataIndextoInputs(personIndex) {
+                const representingIndex = personIndex + 1;
+                this.updateIndexValue = representingIndex;
+                this.removeIndexValue = representingIndex;
+                this.setPersonDataToAddInputs(this.data[personIndex]);
+            },
+            setPersonDataToAddInputs(personData) {
+                if (!(personData instanceof Person)) return;
+
+                this.firstNameValue = personData.getFirstName();
+                this.lastNameValue = personData.getLastName();
+                this.ageValue = personData.getAge();
+                this.nationalityValue = personData.getNationality();
+            },
+            resetAddInputs() {
+                this.firstNameValue = "";
+                this.lastNameValue = "";
+                this.ageValue = "";
+                this.nationalityValue = "";
+            },
+            updatePerson(
+                person,
+                firstName = "",
+                lastName = "",
+                age = "0",
+                nationality = "Lithuanian"
+            ) {
+                person.setFirstName(firstName);
+                person.setLastName(lastName);
+                person.setAge(age);
+                person.setNationality(nationality);
             },
             removePerson() {
                 let removeIndex = parseInt(this.removeIndexValue) - 1;
@@ -80,6 +147,7 @@
             <template x-for="(record, index) in data">
                 <tr
                     class="bg-gradient-to-br rounded-xl hover:text-white hover:from-purple-500 hover:to-purple-700"
+                    @click="setPersonDataIndextoInputs(index);"
                 >
                     <td x-text="(index + 1) + '.'" class="text-center"></td>
                     <template x-for="column in record">
@@ -98,6 +166,17 @@
             x-text="addResultMessage"
         ></div>
         <form action="" class="flex flex-col gap-3">
+            <div class="flex flex-col gap-3" x-show="data.length > 0">
+                <label for="updateIndex">Update Index:</label>
+                <input
+                    type="text"
+                    name="updateIndex"
+                    id="updateIndex"
+                    placeholder="Index . . ."
+                    class="w-full h-full p-2 border-2 rounded-md focus:ring-blue-500 focus:ring focus:ring-offset-2 focus:ring-offset-white"
+                    x-model="updateIndexValue"
+                />
+            </div>
             <div class="flex flex-col gap-3">
                 <label for="firstName">First Name:</label>
                 <input
@@ -148,10 +227,13 @@
             class="text-white bg-gradient-to-br from-blue-500 to-blue-700 hover:from-blue-700 hover:to-blue-900 rounded"
             @click="addPerson();"
         >
-            <div class="hover:scale-110 px-4 py-1">Add</div>
+            <div
+                class="hover:scale-110 px-4 py-1"
+                x-text="isInArraySize(data, updateIndexValue - 1) ? 'Update' : 'Add'"
+            ></div>
         </button>
     </div>
-    <div class="flex flex-col gap-3">
+    <div class="flex flex-col gap-3" x-show="data.length > 0">
         <div
             class="p-3 text-white font-bold bg-gradient-to-br rounded-lg shadow-lg"
             :class="{'from-green-500 to-green-700': isRemoveSuccessResult, 
