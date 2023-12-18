@@ -3,7 +3,13 @@
 <script>
     window.tableData = function () {
         return {
-            data: [],
+            data: [
+                new Person("Joe", "Dalis", "29", "UK"),
+                new Person("Mark", "Robert", "21", "LIT"),
+                new Person("Sara", "Gobrik", "35", "USA"),
+                new Person("Ben", "Ten", "45", "UK"),
+                new Person("Dummy", "Data", "12", "LIT"),
+            ],
             updateIndexValue: "",
             firstNameValue: "",
             lastNameValue: "",
@@ -147,11 +153,16 @@
             <template x-for="(record, index) in data">
                 <tr
                     class="bg-gradient-to-br rounded-xl hover:text-white hover:from-purple-500 hover:to-purple-700"
+                    :class="{'bg-gray-200': index % 2 !== 0,
+                            'border-t-2': index > 0}"
                     @click="setPersonDataIndextoInputs(index);"
                 >
-                    <td x-text="(index + 1) + '.'" class="text-center"></td>
+                    <td
+                        x-text="(index + 1) + '.'"
+                        class="text-center py-2"
+                    ></td>
                     <template x-for="column in record">
-                        <td x-text="column" class="text-center"></td>
+                        <td x-text="column" class="text-center py-2"></td>
                     </template>
                 </tr>
             </template>
