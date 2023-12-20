@@ -27,10 +27,9 @@
                     LocalStorageManager.getData("data")
                 );
 
-                if (
-                    this.data === null ||
-                    UtilitiesHelper.isEmptyArray(this.data)
-                ) {
+                if (this.data === null) this.data = [];
+
+                if (UtilitiesHelper.isEmptyArray(this.data)) {
                     this.data = [
                         new Person("Joe", "Dalis", "29", "UK"),
                         new Person("Mark", "Robert", "21", "LIT"),
