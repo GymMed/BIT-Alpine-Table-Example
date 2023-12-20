@@ -23,11 +23,11 @@
             removeShowResult: false,
             isRemoveSuccessResult: false,
             initTable() {
-                this.data = Person.getPeopleFromArrayOfObjects(
-                    LocalStorageManager.getData("data")
-                );
+                let objectsData = LocalStorageManager.getData("data");
 
-                if (this.data === null) this.data = [];
+                if (objectsData === null) this.data = [];
+                else
+                    this.data = Person.getPeopleFromArrayOfObjects(objectsData);
 
                 if (UtilitiesHelper.isEmptyArray(this.data)) {
                     this.data = [
