@@ -1,15 +1,14 @@
 <!-- Needed elements for component! -->
 <!-- <script src="../../js/person.js"></script> -->
 <script>
-    window.tableData = function () {
+    window.tableData = function (tableGuid) {
         return {
-            data: [
-                new Person("Joe", "Dalis", "29", "UK"),
-                new Person("Mark", "Robert", "21", "LIT"),
-                new Person("Sara", "Gobrik", "35", "USA"),
-                new Person("Ben", "Ten", "45", "UK"),
-                new Person("Dummy", "Data", "12", "LIT"),
-            ],
+            //table state
+            id: tableGuid,
+            data: [],
+            shownData: [],
+            showTableActions: false,
+            //update
             updateIndexValue: "",
             firstNameValue: "",
             lastNameValue: "",
@@ -23,6 +22,33 @@
             removeResultMessage: "",
             removeShowResult: false,
             isRemoveSuccessResult: false,
+            initTable() {
+                this.data = Person.getPeopleFromArrayOfObjects(
+                    LocalStorageManager.getData("data")
+                );
+
+                if (
+                    this.data === null ||
+                    UtilitiesHelper.isEmptyArray(this.data)
+                ) {
+                    this.data = [
+                        new Person("Joe", "Dalis", "29", "UK"),
+                        new Person("Mark", "Robert", "21", "LIT"),
+                        new Person("Sara", "Gobrik", "35", "USA"),
+                        new Person("Ben", "Ten", "45", "UK"),
+                        new Person("Dummy", "Data", "12", "LIT"),
+                    ];
+                }
+                this.resetShownData();
+            },
+            resetShownData() {
+                //make shallow copy
+                this.shownData = [...this.data];
+                this.$dispatch("table-filter-data-" + this.id);
+            },
+            resetFilterInput() {
+                this.$dispatch("table-filter-reset-" + this.id);
+            },
             addPerson() {
                 // let test = new Person("Joe", "Dalis", "29", "Russian");
                 this.addShowResult = true;
@@ -43,7 +69,7 @@
                 //not representation index
                 let updateIndex = parseInt(this.updateIndexValue) - 1;
 
-                if (!this.isInArraySize(this.data, updateIndex)) {
+                if (!UtilitiesHelper.isInArraySize(this.data, updateIndex)) {
                     this.data.push(
                         new Person(
                             this.firstNameValue,
@@ -55,7 +81,9 @@
                     this.addResultMessage =
                         "Successfully added person to the table!";
                     this.isAddSuccessResult = true;
+                    LocalStorageManager.storeData("data", this.data);
                     this.resetAddInputs();
+                    this.resetShownData();
                     return;
                 }
 
@@ -70,26 +98,37 @@
                 this.addResultMessage =
                     "Successfully updated person within a table!";
                 this.isAddSuccessResult = true;
+                LocalStorageManager.storeData("data", this.data);
                 this.resetAddInputs();
-            },
-            isInArraySize(array, value) {
-                if (!Array.isArray(array)) {
-                    return false;
-                } else if (
-                    isNaN(value) ||
-                    value < 0 ||
-                    !Array.isArray(array) ||
-                    value > array.length - 1
-                ) {
-                    return false;
-                }
-                return true;
+                this.resetShownData();
             },
             setPersonDataIndextoInputs(personIndex) {
-                const representingIndex = personIndex + 1;
+                const showPeopleArrayStrings =
+                    UtilitiesHelper.getPeopleArrayAsStrings(this.shownData);
+                const personStringData = this.shownData[
+                    personIndex
+                ].getDataFromColumnName(
+                    Person.columnsNames[Person.COLUMNS_ENUM.All]
+                );
+
+                let personRepeatingTimes = UtilitiesHelper.dataRepeatingTimes(
+                    showPeopleArrayStrings,
+                    personStringData
+                );
+
+                const peopleArrayStrings =
+                    UtilitiesHelper.getPeopleArrayAsStrings(this.data);
+                let personOriginalIndex =
+                    UtilitiesHelper.getRepeatedDataIndexForTimesInArray(
+                        peopleArrayStrings,
+                        personStringData,
+                        personRepeatingTimes
+                    );
+
+                const representingIndex = personOriginalIndex + 1;
                 this.updateIndexValue = representingIndex;
                 this.removeIndexValue = representingIndex;
-                this.setPersonDataToAddInputs(this.data[personIndex]);
+                this.setPersonDataToAddInputs(this.data[personOriginalIndex]);
             },
             setPersonDataToAddInputs(personData) {
                 if (!(personData instanceof Person)) return;
@@ -131,34 +170,125 @@
                     return;
                 }
                 this.data.splice(removeIndex, 1);
+                LocalStorageManager.storeData("data", this.data);
+                this.resetShownData();
                 this.isRemoveSuccessResult = true;
                 this.removeResultMessage =
                     "Successfully removed person from table!";
             },
+            getActiveRowIndex() {
+                let parsedIndex = parseInt(this.updateIndexValue) - 1;
+
+                if (
+                    isNaN(parsedIndex) ||
+                    parsedIndex < 0 ||
+                    parsedIndex > this.data.length
+                )
+                    return -1;
+
+                return parsedIndex;
+            },
+            filterData(event) {
+                const passedFilterData = new FilterData(
+                    event.detail.textToFilterBy,
+                    event.detail.filterColumn
+                );
+                this.shownData = [];
+                let keyToCheckBy =
+                    Person.columnsNames[passedFilterData.getFilterColumn()];
+
+                for (
+                    let currentPerson = 0;
+                    currentPerson < this.data.length;
+                    currentPerson++
+                ) {
+                    if (passedFilterData.getFilterColumn() === 0) {
+                        //explicit for by number
+                        if (
+                            this.getDataNumber(currentPerson).includes(
+                                passedFilterData
+                                    .getTextToFilterBy()
+                                    .toLowerCase()
+                            )
+                        ) {
+                            this.shownData.push(this.data[currentPerson]);
+                        }
+                    } else if (
+                        this.data[currentPerson]
+                            .getDataFromColumnName(keyToCheckBy)
+                            .toLowerCase()
+                            .includes(
+                                passedFilterData
+                                    .getTextToFilterBy()
+                                    .toLowerCase()
+                            )
+                    ) {
+                        this.shownData.push(this.data[currentPerson]);
+                    }
+                }
+            },
+            getDataNumber(index) {
+                return (index + 1).toString() + ".";
+            },
         };
     };
 </script>
-<div x-data="tableData();" x-init="" class="flex flex-col gap-3">
-    <table class="w-full border-collapse rounded-lg overflow-hidden">
-        <thead class="rounded-lg shadow-lg">
+<div
+    x-data="tableData('{{ guidTableComponentId }}');"
+    x-init="initTable();"
+    class="flex flex-col gap-3"
+    @start-filtering-data-{{
+    guidTableComponentId
+    }}="filterData"
+>
+    <table
+        class="w-full transition-transform duration-1000 border-collapse rounded-lg overflow-hidden"
+    >
+        <thead class="rounded-lg shadow-lg relative">
             <tr
                 class="text-white bg-gradient-to-br from-purple-500 to-purple-700 rounded-lg"
             >
-                <template x-for="header in Person.columnsNames">
+                <template x-for="(header, key) in Person.columnsNames">
                     <th x-text="header" class="py-3"></th>
                 </template>
             </tr>
+            <tr
+                class="text-white overflow-visible p-0.5 pt-0 border-2 border-t-0 border-purple-900 absolute right-0 transition-transform duration-500 mr-3 shadow-lg bg-gradient-to-br from-purple-700 to-purple-800 rounded-b-md"
+                @click="showTableActions = !showTableActions;"
+            >
+                <th>
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        fill="currentColor"
+                        class="bi bi-arrow-down-short hover:animate-pulse hover:scale-125"
+                        viewBox="0 0 16 16"
+                    >
+                        <path
+                            fill-rule="evenodd"
+                            d="M8 4a.5.5 0 0 1 .5.5v5.793l2.146-2.147a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 1 1 .708-.708L7.5 10.293V4.5A.5.5 0 0 1 8 4"
+                        />
+                    </svg>
+                </th>
+            </tr>
+        </thead>
+        <thead x-show="showTableActions" x-transition.duration.500ms>
+            <tr
+                x-data="{}"
+                x-init="loadComponent('tableFilter', $el, {tableId: id, filterFunction: 'start-filtering-data-' + id})"
+            ></tr>
         </thead>
         <tbody class="">
-            <template x-for="(record, index) in data">
+            <template x-for="(record, index) in shownData">
                 <tr
-                    class="bg-gradient-to-br rounded-xl hover:text-white hover:from-purple-500 hover:to-purple-700"
+                    class="bg-gradient-to-br rounded-xl hover:text-white hover:from-purple-200 hover:to-purple-400"
                     :class="{'bg-gray-200': index % 2 !== 0,
-                            'border-t-2': index > 0}"
+                            'from-purple-100 to-purple-200': getActiveRowIndex() === index}"
                     @click="setPersonDataIndextoInputs(index);"
                 >
                     <td
-                        x-text="(index + 1) + '.'"
+                        x-text="getDataNumber(index);"
                         class="text-center py-2"
                     ></td>
                     <template x-for="column in record">
@@ -168,109 +298,111 @@
             </template>
         </tbody>
     </table>
-    <div class="flex flex-col gap-3">
-        <div
-            class="p-3 text-white font-bold bg-gradient-to-br rounded-lg shadow-lg"
-            :class="{'from-green-500 to-green-700': isAddSuccessResult, 
-                'from-red-500 to-red-700': !isAddSuccessResult}"
-            x-show="addShowResult"
-            x-text="addResultMessage"
-        ></div>
-        <form action="" class="flex flex-col gap-3">
-            <div class="flex flex-col gap-3" x-show="data.length > 0">
-                <label for="updateIndex">Update Index:</label>
-                <input
-                    type="text"
-                    name="updateIndex"
-                    id="updateIndex"
-                    placeholder="Index . . ."
-                    class="w-full h-full p-2 border-2 rounded-md focus:ring-blue-500 focus:ring focus:ring-offset-2 focus:ring-offset-white"
-                    x-model="updateIndexValue"
-                />
-            </div>
-            <div class="flex flex-col gap-3">
-                <label for="firstName">First Name:</label>
-                <input
-                    type="text"
-                    name="firstName"
-                    id="firstName"
-                    placeholder="First Name . . ."
-                    class="w-full h-full p-2 border-2 rounded-md focus:ring-blue-500 focus:ring focus:ring-offset-2 focus:ring-offset-white"
-                    x-model="firstNameValue"
-                />
-            </div>
-            <div class="flex flex-col gap-3">
-                <label for="lastName">Last Name:</label>
-                <input
-                    type="text"
-                    name="lastName"
-                    id="lastName"
-                    placeholder="Last Name . . ."
-                    class="w-full h-full p-2 border-2 rounded-md focus:ring-blue-500 focus:ring focus:ring-offset-2 focus:ring-offset-white"
-                    x-model="lastNameValue"
-                />
-            </div>
-            <div class="flex flex-col gap-3">
-                <label for="age">Age:</label>
-                <input
-                    type="text"
-                    name="age"
-                    id="age"
-                    placeholder="Age . . ."
-                    class="w-full h-full p-2 border-2 rounded-md focus:ring-blue-500 focus:ring focus:ring-offset-2 focus:ring-offset-white"
-                    x-model="ageValue"
-                />
-            </div>
-            <div class="flex flex-col gap-3">
-                <label for="nationality">Nationality</label>
-                <input
-                    type="text"
-                    name="nationality"
-                    id="nationality"
-                    placeholder="Nationality . . ."
-                    class="w-full h-full p-2 border-2 rounded-md focus:ring-blue-500 focus:ring focus:ring-offset-2 focus:ring-offset-white"
-                    x-model="nationalityValue"
-                />
-            </div>
-        </form>
-        <button
-            type="button"
-            class="text-white bg-gradient-to-br from-blue-500 to-blue-700 hover:from-blue-700 hover:to-blue-900 rounded"
-            @click="addPerson();"
-        >
+    <div class="flex gap-5">
+        <div class="flex flex-col gap-3 w-full">
             <div
-                class="hover:scale-110 px-4 py-1"
-                x-text="isInArraySize(data, updateIndexValue - 1) ? 'Update' : 'Add'"
+                class="p-3 text-white font-bold bg-gradient-to-br rounded-lg shadow-lg"
+                :class="{'from-green-500 to-green-700': isAddSuccessResult,
+                    'from-red-500 to-red-700': !isAddSuccessResult}"
+                x-show="addShowResult"
+                x-text="addResultMessage"
             ></div>
-        </button>
-    </div>
-    <div class="flex flex-col gap-3" x-show="data.length > 0">
-        <div
-            class="p-3 text-white font-bold bg-gradient-to-br rounded-lg shadow-lg"
-            :class="{'from-green-500 to-green-700': isRemoveSuccessResult, 
-                'from-red-500 to-red-700': !isRemoveSuccessResult}"
-            x-show="removeShowResult"
-            x-text="removeResultMessage"
-        ></div>
-        <form>
-            <div class="flex flex-col gap-3">
-                <label for="removeIndex">Remove Index:</label>
-                <input
-                    type="text"
-                    name="removeIndex"
-                    id="removeIndex"
-                    placeholder="Index . . ."
-                    class="w-full h-full p-2 border-2 rounded-md focus:ring-blue-500 focus:ring focus:ring-offset-2 focus:ring-offset-white"
-                    x-model="removeIndexValue"
-                />
-            </div>
-        </form>
-        <button
-            type="button"
-            class="text-white bg-gradient-to-br from-blue-500 to-blue-700 hover:from-blue-700 hover:to-blue-900 rounded"
-            @click="removePerson();"
-        >
-            <div class="hover:scale-110 px-4 py-1">Remove</div>
-        </button>
+            <form action="" class="flex flex-col gap-3">
+                <div class="flex flex-col gap-3" x-show="data.length > 0">
+                    <label for="updateIndex">Update Index:</label>
+                    <input
+                        type="text"
+                        name="updateIndex"
+                        id="updateIndex"
+                        placeholder="Index . . ."
+                        class="w-full h-full p-2 border-2 rounded-md focus:ring-blue-500 focus:ring focus:ring-offset-2 focus:ring-offset-white"
+                        x-model="updateIndexValue"
+                    />
+                </div>
+                <div class="flex flex-col gap-3">
+                    <label for="firstName">First Name:</label>
+                    <input
+                        type="text"
+                        name="firstName"
+                        id="firstName"
+                        placeholder="First Name . . ."
+                        class="w-full h-full p-2 border-2 rounded-md focus:ring-blue-500 focus:ring focus:ring-offset-2 focus:ring-offset-white"
+                        x-model="firstNameValue"
+                    />
+                </div>
+                <div class="flex flex-col gap-3">
+                    <label for="lastName">Last Name:</label>
+                    <input
+                        type="text"
+                        name="lastName"
+                        id="lastName"
+                        placeholder="Last Name . . ."
+                        class="w-full h-full p-2 border-2 rounded-md focus:ring-blue-500 focus:ring focus:ring-offset-2 focus:ring-offset-white"
+                        x-model="lastNameValue"
+                    />
+                </div>
+                <div class="flex flex-col gap-3">
+                    <label for="age">Age:</label>
+                    <input
+                        type="text"
+                        name="age"
+                        id="age"
+                        placeholder="Age . . ."
+                        class="w-full h-full p-2 border-2 rounded-md focus:ring-blue-500 focus:ring focus:ring-offset-2 focus:ring-offset-white"
+                        x-model="ageValue"
+                    />
+                </div>
+                <div class="flex flex-col gap-3">
+                    <label for="nationality">Nationality</label>
+                    <input
+                        type="text"
+                        name="nationality"
+                        id="nationality"
+                        placeholder="Nationality . . ."
+                        class="w-full h-full p-2 border-2 rounded-md focus:ring-blue-500 focus:ring focus:ring-offset-2 focus:ring-offset-white"
+                        x-model="nationalityValue"
+                    />
+                </div>
+            </form>
+            <button
+                type="button"
+                class="text-white bg-gradient-to-br from-blue-500 to-blue-700 hover:from-blue-700 hover:to-blue-900 rounded"
+                @click="addPerson();"
+            >
+                <div
+                    class="hover:scale-110 px-4 py-1"
+                    x-text="UtilitiesHelper.isInArraySize(data, updateIndexValue - 1) ? 'Update' : 'Add'"
+                ></div>
+            </button>
+        </div>
+        <div class="flex flex-col gap-3 w-full" x-show="data.length > 0">
+            <div
+                class="p-3 text-white font-bold bg-gradient-to-br rounded-lg shadow-lg"
+                :class="{'from-green-500 to-green-700': isRemoveSuccessResult,
+                    'from-red-500 to-red-700': !isRemoveSuccessResult}"
+                x-show="removeShowResult"
+                x-text="removeResultMessage"
+            ></div>
+            <form>
+                <div class="flex flex-col gap-3">
+                    <label for="removeIndex">Remove Index:</label>
+                    <input
+                        type="text"
+                        name="removeIndex"
+                        id="removeIndex"
+                        placeholder="Index . . ."
+                        class="w-full h-full p-2 border-2 rounded-md focus:ring-blue-500 focus:ring focus:ring-offset-2 focus:ring-offset-white"
+                        x-model="removeIndexValue"
+                    />
+                </div>
+            </form>
+            <button
+                type="button"
+                class="text-white bg-gradient-to-br from-blue-500 to-blue-700 hover:from-blue-700 hover:to-blue-900 rounded"
+                @click="removePerson();"
+            >
+                <div class="hover:scale-110 px-4 py-1">Remove</div>
+            </button>
+        </div>
     </div>
 </div>

@@ -7,8 +7,16 @@
         <script src="https://cdn.tailwindcss.com"></script>
         <script
             defer
+            src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.13.3/dist/cdn.min.js"
+        ></script>
+        <script
+            defer
             src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"
         ></script>
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css"
+        />
     </head>
     <body>
         <main class="shadow-xl m-5 p-5 rounded-lg flex flex-col gap-3">
@@ -20,40 +28,18 @@
             >
                 <div
                     x-data="{}"
-                    x-init="loadComponent('tableComponent', $el)"
+                    x-init="loadComponent('tableComponent', $el, {guidTableComponentId: tableComponentId})"
                 ></div>
             </section>
         </main>
         <script src="assets/js/person.js"></script>
+        <script src="assets/js/localStorageManager.js"></script>
+        <script src="assets/js/filterData.js"></script>
+        <script src="assets/js/utilitiesHelper.js"></script>
+        <script src="assets/js/guidGenerator.js"></script>
+        <script src="assets/js/componentLoaderHelpers.js"></script>
         <script>
-            function executeScripts(html) {
-                const parsedHTML = new DOMParser().parseFromString(
-                    html,
-                    "text/html"
-                );
-
-                parsedHTML.querySelectorAll("script").forEach((script) => {
-                    const scriptContent = script.textContent;
-                    const scriptFunction = new Function(scriptContent);
-                    scriptFunction();
-                });
-            }
-
-            function loadComponent(componentName, dom) {
-                if (!(dom instanceof Element))
-                    throw new Error("Invalid DOM element provided!");
-
-                fetch(`assets/html/components/${componentName}.html`)
-                    .then((response) => response.text())
-                    .then((html) => {
-                        // Assuming you have a specific container in your main.html
-                        executeScripts(html);
-                        const newDom = document.createElement("div");
-                        newDom.innerHTML = html;
-
-                        dom.parentNode.replaceChild(newDom, dom);
-                    });
-            }
+            const tableComponentId = GuidGenerator.getGUID();
         </script>
     </body>
 </html>
